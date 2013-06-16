@@ -10,7 +10,7 @@ def hashfunc(s):
 	return hashlib.sha1(s).hexdigest()
 
 def hashlength():
-	return len(hashfunc('0'))
+	return 40
 	
 def getpiecesize(size):
 	kilo = 1024
@@ -35,23 +35,26 @@ def getpiecesize(size):
 class BlazeFile:
 	
 	def __init__(self):
-		self.dict = {}
+		self.clear()
 	
 	def clear(self):
-		self.dict = {}
+		self.tracker = None
+		self.filename = None
+		self.size = 0
+		self.block_size = 0
+		self.block = []
+		self.hash_info = None
 		
-	def __getitem__(self, key):
-		return self.dict.get(key)
-	
 	def load(self, filename):
 		self.clear()
 		f = open(filename, 'r')
 		
-		self.dict['tracker'] = f.readline().strip()
-		self.dict['filename'] = f.readline().strip()
-		self.dict['size'] = long(f.readline().strip())
+		self.tracker = f.readline().strip()
+		self.filename = f.readline().strip()
+		self.size = long(f.readline().strip())
+		self.block_size = long(f.readline().strip())
 		block = []
-		self.dict['block'] = block
+		self.block = block
 		
 		hlen = hashlength()
 		reading = True
@@ -64,37 +67,39 @@ class BlazeFile:
 				reading = False
 		
 		f.close()
-	
-	def save(self, filename=None):
-		if (not filename):
-			filename = self.dict['filename'] + ".blaze"
-	
-		f = open(filename,'w')
-		f.write(self.dict['tracker'] + '\n')
-		f.write(self.dict['filename'] + '\n')
-		f.write(str(self.dict['size']) + '\n')
 		
-		for e in self.dict['block']:
+		self.hash_info = self.gethash()
+	
+	def save(self, filepath):
+		f = open(filepath,'w')
+		f.write(self.tracker + '\n')
+		f.write(self.filename + '\n')
+		f.write(str(self.size) + '\n')
+		f.write(str(self.block_size) + '\n')
+		
+		for e in self.block:
 			f.write(e)
 			
 		f.close()
 	
-	def encodefrom(self, filename, tracker, size=None):
+	def encodefrom(self, filepath, filename, tracker, size=None):
 		self.clear()
 		
-		self.dict['tracker'] = tracker
-		self.dict['filename'] = filename
+		self.tracker = tracker
+		self.filename = filename
 		
-		fsize = os.path.getsize(filename)
-		self.dict['size'] = fsize
+		fsize = os.path.getsize(filepath)
+		self.size = fsize
 		
 		block = []
-		self.dict['block'] = block
+		self.block = block
 		
 		if (not size): 
 			size = getpiecesize(fsize)
 		
-		f = open(filename, 'rb')
+		self.block_size = size
+		
+		f = open(filepath, 'rb')
 		
 		reading = True
 		while(reading):
@@ -105,3 +110,11 @@ class BlazeFile:
 				reading = False
 		
 		f.close()
+		
+		self.hash_info = self.gethash()
+		
+	def gethash(self):
+		if (self.filename):
+			return hashfunc(self.filename)
+		else:
+			return None
