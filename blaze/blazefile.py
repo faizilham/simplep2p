@@ -49,8 +49,8 @@ class BlazeFile:
 		self.clear()
 		f = open(filename, 'r')
 		
-		self.tracker = f.readline().strip()
 		self.filename = f.readline().strip()
+		self.tracker = f.readline().strip()
 		self.size = long(f.readline().strip())
 		self.block_size = long(f.readline().strip())
 		block = []
@@ -72,8 +72,8 @@ class BlazeFile:
 	
 	def save(self, filepath):
 		f = open(filepath,'w')
-		f.write(self.tracker + '\n')
 		f.write(self.filename + '\n')
+		f.write(self.tracker + '\n')
 		f.write(str(self.size) + '\n')
 		f.write(str(self.block_size) + '\n')
 		
